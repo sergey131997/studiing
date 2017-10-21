@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <vector>
+#include <fstream>
 #include <algorithm>
 using namespace std;
 
@@ -13,7 +14,7 @@ struct Puchok {
 	}
 
 	Puchok(int n) {
-		H.resize(n, -1);
+		H.resize(n + 1, -1);
 	}
 
 	void add(int i, int j) {
@@ -103,6 +104,20 @@ struct Puchok {
 			cout << "\n\n\n";
 		}
 	}
+
+	void Print(std::ostream& out) {
+		out << "digraph {\n";
+			for (int i = 0; i < H.size(); ++i)
+				for (int j = H[i]; j != -1; j = L[j])
+					out << i << "->" << I[j] <<'\n';
+			out << "}";
+		return;
+	}
+
+	void Print(char* s) {
+		std::ofstream output(s);
+		Print(output);
+	}
 private:
 	vector<int> L, H, I;
 };
@@ -119,6 +134,6 @@ int main() {
 		a--, b--;
 		p.add(a, b);
 	}
-	p.Print();
+	p.Print("D:/out.gv");
 	cout << p.BFS();
 }
