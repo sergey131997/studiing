@@ -17,11 +17,12 @@ struct Puchok {
 		H.resize(n + 1, -1);
 	}
 
-	void add(int i, int j) {
+	void add(int i, int j, int m = 0) {
 		if (H[i] == -1) {
 			H[i] = L.size();
 			I.push_back(j);
 			L.push_back(-1);
+			M.push_back(m);
 			return;
 		}
 		int g = H[i];
@@ -30,6 +31,7 @@ struct Puchok {
 		L[g] = I.size();
 		L.push_back(-1);
 		I.push_back(j);
+		M.push_back(m);
 	}
 
 	Puchok(vector<int>& a,
@@ -103,13 +105,13 @@ struct Puchok {
 			}
 			cout << "\n\n\n";
 		}
-	}
+	}	
 
 	void Print(std::ostream& out) {
 		out << "digraph {\n";
-			for (int i = 0; i < H.size(); ++i)
-				for (int j = H[i]; j != -1; j = L[j])
-					out << i << "->" << I[j] <<'\n';
+		for (int i = 0; i < H.size(); ++i)
+			for (int j = H[i]; j != -1; j = L[j])
+				out << i << "->" << I[j] <<"[label="<<M[j]<<"]" << '\n';
 			out << "}";
 		return;
 	}
@@ -118,8 +120,60 @@ struct Puchok {
 		std::ofstream output(s);
 		Print(output);
 	}
+
+	vector<pair<int,int>> Deicstra(int i) {
+		vector<int> us(H.size());
+		vector<pair<int, int>> qu;
+		vector<pair<int, int>> ans(H.size(), { -1, -1});
+		ans[i].first = 0;
+		set(qu, { 0, i });
+		while (qu.size()) {
+			pair<int, int> v = qu[qu.size() - 1];
+			qu.pop_back();
+			if (us[v.second])
+				continue;
+			us[v.second] = 1;
+			for (int j = H[v.second]; j != -1; j = L[j]) {
+				if (ans[I[j]].first == -1 ||
+					ans[I[j]].first > v.first + M[j]) {
+					ans[I[j]].first = v.first + M[j];
+					ans[I[j]].second = v.second;
+					set(qu, { ans[I[j]].first, I[j] });
+				}
+			}
+		}
+		return ans;
+	}
+
+	void set(vector<pair<int, int>>& q, pair<int, int> a) {
+		if (q.empty() || q[q.size() - 1].first >= a.first) {
+			q.push_back(a);
+			return;
+		}
+		int r = q.size() - 1, l = -1;
+		while (r - l > 1) {
+			int m = (r + l) / 2;
+			if (q[m].first > a.first)
+				l = m;
+			else
+				r = m;
+		}
+		q.insert(q.begin() + r, a);
+	}
+
+	void Print(std::string s, vector<pair<int, int>> a) {
+		ofstream out(s);
+		out << "digraph {\n";
+		for (int i = 0; i < a.size(); ++i) {
+			if (a[i].second == -1)
+				continue;
+			out << a[i].second << "->" << i << "[label=" << a[i].first - a[a[i].second].first << "]\n";
+		}
+		out << "}\n";
+	}
+
 private:
-	vector<int> L, H, I;
+	vector<int> L, H, I, M;
 };
 
 int main() {
@@ -129,11 +183,15 @@ int main() {
 	cin >> n >> m;
 	Puchok p(n);
 	for (int i = 0; i < m; ++i) {
-		int a, b;
-		cin >> a >> b;
+		int a, b, m;
+		cin >> a >> b >> m;
 		a--, b--;
-		p.add(a, b);
+		p.add(a, b, m);
 	}
 	p.Print("D:/out.gv");
-	cout << p.BFS();
+	vector<pair<int,int>> ans = p.Deicstra(4);
+	p.Print("D:/d.gv", ans);
+	for (pair<int,int> i : ans)
+		cout << i.first << ' ';	
+	p.Print("D:/out.gv");
 }
